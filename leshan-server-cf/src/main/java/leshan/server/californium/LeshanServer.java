@@ -50,6 +50,7 @@ import leshan.server.impl.ClientRegistryImpl;
 import leshan.server.impl.ObservationRegistryImpl;
 import leshan.server.impl.SecurityRegistryImpl;
 import leshan.server.observation.ObservationRegistry;
+import leshan.server.registration.RegistrationHandler;
 import leshan.server.request.LwM2mRequest;
 import leshan.server.security.SecurityRegistry;
 import leshan.util.Validate;
@@ -124,28 +125,29 @@ public class LeshanServer implements LwM2mServer {
      * @param localAddressSecure the address to bind the CoAP server for DTLS connection.
      */
     public LeshanServer(final InetSocketAddress localAddress, final InetSocketAddress localAddressSecure,
-            final ClientRegistry clientRegistry, final SecurityRegistry securityRegistry, final ObservationRegistry observationRegistry) {
+            final ClientRegistry clientRegistry, final SecurityRegistry securityRegistry,
+            final ObservationRegistry observationRegistry) {
         Validate.notNull(localAddress, "IP address cannot be null");
         Validate.notNull(localAddressSecure, "Secure IP address cannot be null");
 
         // init registry
         if (clientRegistry == null) {
-			this.clientRegistry = new ClientRegistryImpl();
-		} else {
-			this.clientRegistry = clientRegistry;
-		}
+            this.clientRegistry = new ClientRegistryImpl();
+        } else {
+            this.clientRegistry = clientRegistry;
+        }
 
         if (observationRegistry == null) {
-			this.observationRegistry = new ObservationRegistryImpl();
-		} else {
-			this.observationRegistry = observationRegistry;
-		}
+            this.observationRegistry = new ObservationRegistryImpl();
+        } else {
+            this.observationRegistry = observationRegistry;
+        }
 
         if (securityRegistry == null) {
-			this.securityRegistry = new SecurityRegistryImpl();
-		} else {
-			this.securityRegistry = securityRegistry;
-		}
+            this.securityRegistry = new SecurityRegistryImpl();
+        } else {
+            this.securityRegistry = securityRegistry;
+        }
 
         // Cancel observations on client unregistering
         this.clientRegistry.addListener(new ClientRegistryListener() {
@@ -177,7 +179,8 @@ public class LeshanServer implements LwM2mServer {
         coapServer.addEndpoint(secureEndpoint);
 
         // define /rd resource
-        final RegisterResource rdResource = new RegisterResource(this.clientRegistry, this.securityRegistry);
+        final RegisterResource rdResource = new RegisterResource(new RegistrationHandler(this.clientRegistry,
+                this.securityRegistry));
         coapServer.add(rdResource);
 
         // create sender
@@ -191,7 +194,7 @@ public class LeshanServer implements LwM2mServer {
      * Starts the server and binds it to the specified port.
      */
     @Override
-	public void start() {
+    public void start() {
         // load resource definitions
         Resources.load();
 
@@ -200,15 +203,15 @@ public class LeshanServer implements LwM2mServer {
 
         // start client registry
         if (clientRegistry instanceof ClientRegistryImpl) {
-			((ClientRegistryImpl) clientRegistry).start();
-		}
+            ((ClientRegistryImpl) clientRegistry).start();
+        }
     }
 
     /**
      * Stops the server and unbinds it from assigned ports (can be restarted).
      */
     @Override
-	public void stop() {
+    public void stop() {
         coapServer.stop();
 
         if (clientRegistry instanceof ClientRegistryImpl) {
@@ -256,8 +259,8 @@ public class LeshanServer implements LwM2mServer {
     }
 
     @Override
-    public <T extends ClientResponse> void send(final LwM2mRequest<T> request, final ResponseConsumer<T> responseCallback,
-            final ExceptionConsumer errorCallback) {
+    public <T extends ClientResponse> void send(final LwM2mRequest<T> request,
+            final ResponseConsumer<T> responseCallback, final ExceptionConsumer errorCallback) {
         requestSender.send(request, responseCallback, errorCallback);
     }
 }
