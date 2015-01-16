@@ -187,7 +187,7 @@ public class LeshanServer implements LwM2mServer {
         final Set<Endpoint> endpoints = new HashSet<>();
         endpoints.add(endpoint);
         endpoints.add(secureEndpoint);
-        requestSender = new CaliforniumLwM2mRequestSender(endpoints, this.observationRegistry);
+        requestSender = new CaliforniumLwM2mRequestSender(endpoints, this.clientRegistry, this.observationRegistry);
     }
 
     /**
